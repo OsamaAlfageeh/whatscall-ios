@@ -60,12 +60,12 @@ final class AppModel: ObservableObject {
                 failure = nil
             case .ready(let p):
                 access = p.status
-                guard let conf = ApiClient.wgQuick(privateKey: keys.privateKey, p) else {
+                guard let params = ApiClient.tunnelParams(privateKey: keys.privateKey, p) else {
                     failure = .notConfigured
                     return
                 }
                 do {
-                    try await vpn.connect(wgQuick: conf)
+                    try await vpn.connect(params: params)
                     failure = nil
                 } catch {
                     failure = .vpn

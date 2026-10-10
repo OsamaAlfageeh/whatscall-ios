@@ -29,12 +29,12 @@ final class VPNManager: ObservableObject {
     }
 
     /// يحفظ الإعداد ويشغّل النفق. أول مرة يطلب النظام إذن إضافة VPN.
-    func connect(wgQuick: String) async throws {
+    func connect(params: [String: Any]) async throws {
         let m = manager ?? NETunnelProviderManager()
         let proto = NETunnelProviderProtocol()
         proto.providerBundleIdentifier = "live.whatscall.tunnel"
         proto.serverAddress = "Whats Call"
-        proto.providerConfiguration = ["wgQuickConfig": wgQuick]
+        proto.providerConfiguration = params
         m.protocolConfiguration = proto
         m.localizedDescription = "واتس كول"
         m.isEnabled = true

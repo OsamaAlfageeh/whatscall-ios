@@ -94,20 +94,17 @@ final class ApiClient {
         return try JSONDecoder().decode(AccessStatus.self, from: data)
     }
 
-    /// إعداد WireGuard بصيغة wg-quick. على iOS لا يمر بالنفق إلا نطاقات ميتا التي يحددها الخادم.
-    static func wgQuick(privateKey: String, _ p: Provisioned) -> String? {
+    /// حقول النفق التي يستلمها الملحق. على iOS لا يمر بالنفق إلا نطاقات ميتا التي يحددها الخادم.
+    static func tunnelParams(privateKey: String, _ p: Provisioned) -> [String: Any]? {
         guard let allowed = p.iosAllowedIps, !allowed.isEmpty else { return nil }
-        return """
-        [Interface]
-        PrivateKey = \(privateKey)
-        Address = \(p.address)
-        DNS = \(p.dns)
-
-        [Peer]
-        PublicKey = \(p.serverPublicKey)
-        Endpoint = \(p.endpoint)
-        AllowedIPs = \(allowed)
-        PersistentKeepalive = \(p.keepalive)
-        """
+        return [
+            "privateKey": privateKey,
+            "address": p.address,
+            "dns": p.dns,
+            "serverPublicKey": p.serverPublicKey,
+            "endpoint": p.endpoint,
+            "allowedIps": allowed,
+            "keepalive": p.keepalive,
+        ]
     }
 }
