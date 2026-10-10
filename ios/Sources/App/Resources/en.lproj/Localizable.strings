@@ -1,0 +1,15 @@
+"app_name" = "Whats Call";
+"tap_to_start" = "Tap the button to start Whats Call";
+"tap_to_stop" = "Tap the button to stop";
+"state_on" = "On";
+"state_off" = "Off";
+"footer_note" = "It sends the connection of Meta apps (WhatsApp and others) through our server so calls work. Your other apps are not affected.";
+"banner_trial %lld" = "Free trial: %lld days left";
+"banner_active" = "Your subscription is active";
+"banner_expired" = "Your trial has ended";
+"err_net" = "Could not reach the internet. Try again.";
+"err_server" = "The service is not ready for iPhone yet. Try again later.";
+"err_vpn" = "Could not start the connection. Make sure you allowed the VPN request from the system.";
+"disclosure_title" = "Before you start";
+"disclosure_body" = "Whats Call creates an encrypted connection (VPN) between your phone and our server. The connection of Meta apps (WhatsApp and others) goes through it so your calls work.\n\nOn iPhone a connection cannot be limited to one app, so any app that talks to Meta servers (such as Instagram and Facebook) also goes through it. The domain-name lookups (DNS) from your phone also pass through our server, and we do not store them.\n\nWe do not record your calls, messages or browsing. We keep a device identifier that is not linked to your name or number, and the time of your trial or subscription.\n\nBy tapping “I agree” you accept this, and the system will ask your permission to add a VPN connection.";
+"disclosure_accept" = "I agree";

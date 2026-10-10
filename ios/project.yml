@@ -1,0 +1,90 @@
+name: WhatsCall
+options:
+  bundleIdPrefix: live.whatscall
+  deploymentTarget:
+    iOS: "15.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ENABLE_BITCODE: NO
+    DEVELOPMENT_TEAM: ""
+packages:
+  # WireGuardKit from the official repository, vendored by the build (see ../.github/workflows/ios-build.yml)
+  WireGuardKit:
+    path: Vendor/wireguard-apple
+targets:
+  WhatsCall:
+    type: application
+    platform: iOS
+    sources:
+      - Sources/App
+    info:
+      path: Sources/App/Info.plist
+      properties:
+        CFBundleDisplayName: واتس كول
+        CFBundleDevelopmentRegion: ar
+        CFBundleLocalizations: [ar, en]
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        LSApplicationQueriesSchemes: [whatsapp]
+        ITSAppUsesNonExemptEncryption: false
+        WCApiHost: $(API_HOST)
+        WCApiKey: $(API_KEY)
+    entitlements:
+      path: Sources/App/WhatsCall.entitlements
+      properties:
+        com.apple.developer.networking.networkextension: [packet-tunnel-provider]
+        com.apple.security.application-groups: [group.live.whatscall]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: live.whatscall
+        API_HOST: whatscall.live
+        API_KEY: ""
+    dependencies:
+      - target: PacketTunnel
+        embed: true
+  PacketTunnel:
+    type: app-extension
+    platform: iOS
+    sources:
+      - Sources/Tunnel
+    info:
+      path: Sources/Tunnel/Info.plist
+      properties:
+        CFBundleDisplayName: Whats Call Tunnel
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.networkextension.packet-tunnel
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).PacketTunnelProvider
+    entitlements:
+      path: Sources/Tunnel/PacketTunnel.entitlements
+      properties:
+        com.apple.developer.networking.networkextension: [packet-tunnel-provider]
+        com.apple.security.application-groups: [group.live.whatscall]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: live.whatscall.tunnel
+        SKIP_INSTALL: YES
+    dependencies:
+      - package: WireGuardKit
+        product: WireGuardKit
+      - target: WireGuardGoBridgeiOS
+  # The Go library the tunnel links against; Swift Package Manager cannot build it, so an external build target runs make.
+  WireGuardGoBridgeiOS:
+    type: ""
+    platform: iOS
+    legacy:
+      toolPath: /usr/bin/make
+      passSettings: true
+      workingDirectory: Vendor/wireguard-apple/Sources/WireGuardKitGo
+    settings:
+      base:
+        SDKROOT: iphoneos
+        SUPPORTED_PLATFORMS: iphoneos
+schemes:
+  WhatsCall:
+    build:
+      targets:
+        WhatsCall: all

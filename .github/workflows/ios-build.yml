@@ -1,0 +1,65 @@
+name: iOS build (unsigned compile check)
+
+# macOS minutes cost ten times the Linux ones on a private repository, so this runs only when the iOS sources change
+# or when started by hand. It checks that the project generates and compiles; it does not sign or upload anything.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'ios/**'
+      - '.github/workflows/ios-build.yml'
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      # the WireGuard Go bridge is built with the Go toolchain, which the macOS image does not ship
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Tool versions
+        run: |
+          xcodebuild -version
+          swift --version
+          go version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      # WireGuardKit (Swift) and its Go bridge come from the official repository, pinned by clone depth only for now.
+      - name: Vendor WireGuardKit
+        run: git clone --depth 1 https://github.com/WireGuard/wireguard-apple ios/Vendor/wireguard-apple
+
+      # the upstream manifest declares an old tools version that cannot express iOS 15; raise it in our vendored copy only
+      - name: Patch the vendored package manifest
+        run: |
+          head -3 ios/Vendor/wireguard-apple/Package.swift
+          sed -i '' '1s|.*|// swift-tools-version:5.5|' ios/Vendor/wireguard-apple/Package.swift
+          head -3 ios/Vendor/wireguard-apple/Package.swift
+
+      # the C header uses u_int32_t etc. without including their header, which Xcode 16 rejects; fix it in our vendored copy only
+      - name: Patch the vendored C header
+        run: |
+          H=ios/Vendor/wireguard-apple/Sources/WireGuardKitC/WireGuardKitC.h
+          { echo '#include <sys/types.h>'; cat "$H"; } > "$H.tmp" && mv "$H.tmp" "$H"
+          head -3 "$H"
+
+      - name: Generate the Xcode project
+        working-directory: ios
+        run: xcodegen generate
+
+      - name: Build for device (unsigned)
+        working-directory: ios
+        run: |
+          set +e
+          xcodebuild -project WhatsCall.xcodeproj -scheme WhatsCall -configuration Release             -sdk iphoneos -destination 'generic/platform=iOS'             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""             build > build.log 2>&1
+          code=$?
+          if [ $code -ne 0 ]; then
+            echo '--- errors ---'; grep -nE 'error:|BUILD (FAILED|INTERRUPTED)' build.log | head -40
+            echo '--- last 12 lines ---'; tail -12 build.log | cut -c1-240
+          fi
+          exit $code
